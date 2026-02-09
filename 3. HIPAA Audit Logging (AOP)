@@ -1,0 +1,30 @@
+@Aspect
+@Component
+@Slf4j
+public class PHIAuditAspect {
+
+    @Autowired
+    private AuditRepository auditRepository;
+
+    @Around("@annotation(com.healthcare.annotations.AuditPHI)")
+    public Object logPHIAccess(ProceedingJoinPoint joinPoint) throws Throwable {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String methodName = joinPoint.getSignature().getName();
+        
+        log.info("HIPAA AUDIT: User {} accessed PHI via {}", username, methodName);
+        
+        try {
+            Object result = joinPoint.proceed();
+            saveAuditTrail(username, methodName, "SUCCESS");
+            return result;
+        } catch (Exception e) {
+            saveAuditTrail(username, methodName, "FAILURE: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    private void saveAuditTrail(String user, String action, String status) {
+        AuditLog logEntry = new AuditLog(user, action, LocalDateTime.now(), status);
+        auditRepository.save(logEntry);
+    }
+}
