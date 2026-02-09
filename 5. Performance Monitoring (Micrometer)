@@ -1,0 +1,15 @@
+@Component
+public class SecurityMetrics {
+
+    private final Counter loginFailures;
+
+    public SecurityMetrics(MeterRegistry registry) {
+        this.loginFailures = Counter.builder("security.login.failures")
+                .description("Total failed login attempts")
+                .register(registry);
+    }
+
+    public void incrementFailure() {
+        loginFailures.increment();
+    }
+}
