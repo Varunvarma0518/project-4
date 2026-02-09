@@ -1,0 +1,28 @@
+@Converter
+public class AttributeEncryptor implements AttributeConverter<String, String> {
+
+    private final EncryptionService encryptionService;
+
+    public AttributeEncryptor(EncryptionService service) {
+        this.encryptionService = service;
+    }
+
+    @Override
+    public String convertToDatabaseColumn(String attribute) {
+        return (attribute == null) ? null : encryptionService.encrypt(attribute);
+    }
+
+    @Override
+    public String convertToEntityAttribute(String dbData) {
+        return (dbData == null) ? null : encryptionService.decrypt(dbData);
+    }
+}
+
+// Usage in Entity
+@Entity
+public class Patient {
+    @Id @GeneratedValue private Long id;
+    
+    @Convert(converter = AttributeEncryptor.class)
+    private String ssn; // Encrypted in DB, decrypted in app
+}
